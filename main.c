@@ -39,8 +39,8 @@ void COMP0_Handler(void) {
 }
 
 // GPIO Port E interrupt handler
-void GPIOE_Handler(void) {
-    GPIO_PORTE_ICR_R |= 0x02;   // Clear interrupt flag for PE1
+void GPIOB_Handler(void) {
+    GPIO_PORTB_ICR_R |= 0x80;   // Clear interrupt flag for PE1
     COMP_ACMIS_R = 0x01;
 		adc_ready = 0;
 		__asm("WFI");								// Enter deep sleep
@@ -104,20 +104,21 @@ void GPIO_ADC_INIT(void) {
 
 // Initialize GPIO for PE1 as button input
 void gpio_init(void) {
-    SYSCTL_RCGCGPIO_R |= 0x10; // Enable clock for Port E
-    while ((SYSCTL_PRGPIO_R & 0x10) == 0); // Wait until Port E is ready
+    SYSCTL_RCGCGPIO_R |= 0x02; // Enable clock for Port B
+    while ((SYSCTL_PRGPIO_R & 0x02) == 0); // Wait until Port E is ready
 
-    GPIO_PORTE_DIR_R &= ~0x02;  // Set PE1 as input
-    GPIO_PORTE_DEN_R |= 0x02;   // Enable digital functionality on PE1
-    GPIO_PORTE_PUR_R |= 0x02;   // Enable pull-up resistor on PE1
+    GPIO_PORTB_DIR_R &= ~0x80;  // Set PB7 as input
+    GPIO_PORTB_DEN_R |= 0x80;   // Enable digital functionality on PE1
+    GPIO_PORTB_PUR_R |= 0x80;   // Enable pull-up resistor on PE1
 
-    GPIO_PORTE_IS_R &= ~0x02;   // Make PE1 edge-sensitive
-    GPIO_PORTE_IBE_R &= ~0x02;  // Trigger on a single edge
-    GPIO_PORTE_IEV_R &= ~0x02;  // Trigger on falling edge
-    GPIO_PORTE_ICR_R |= 0x02;   // Clear any prior interrupt on PE1
-    GPIO_PORTE_IM_R |= 0x02;    // Enable interrupt for PE1
+    GPIO_PORTB_IS_R &= ~0x80;   // Make PE1 edge-sensitive
+    GPIO_PORTB_IBE_R &= ~0x80;  // Trigger on a single edge
+    GPIO_PORTB_IEV_R &= ~0x80;  // Trigger on falling edge
+    GPIO_PORTB_ICR_R |= 0x80;   // Clear any prior interrupt on PE1
+    GPIO_PORTB_IM_R |= 0x80;    // Enable interrupt for PE1
 
-    NVIC_EN0_R |= (1 << 4);     // Enable interrupt in NVIC for Port E
+    NVIC_PRI0_R &= 0xFFFF02FF;   // Set priority for Port E interrupt
+    NVIC_EN0_R |= 0x2;     // Enable interrupt in NVIC for Port E
 }
 
 void ADC_measurement(uint32_t *lm35_mV, uint32_t *threshold_mV){
